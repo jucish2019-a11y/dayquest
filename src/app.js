@@ -134,15 +134,34 @@
     var totalCompleted = 0;
     var catCounts = {health:0,mind:0,skills:0,social:0};
     var bestStreak = 0, balancedDays = 0, earlyBirdDays = 0, nightOwlDays = 0, perfectDays = 0;
+
+    // Extended data collection
+    var xpPerDay = {};
+    var completionsPerDay = {};
+    var questCompletionCounts = {};
+    var allDates = Object.keys(S.completions).sort();
+
     for (var dk in S.completions) {
       var day = S.completions[dk];
       var n = Object.keys(day).length;
       totalCompleted += n;
+
+      // XP per day
+      var dayXP = 0;
       for (var qid in day) {
         for (var qi=0;qi<S.quests.length;qi++) {
-          if (S.quests[qi].id===qid) { catCounts[S.quests[qi].cat]++; break; }
+          if (S.quests[qi].id===qid) {
+            catCounts[S.quests[qi].cat]++;
+            dayXP += xpForDiff(S.quests[qi].diff);
+            questCompletionCounts[qid] = (questCompletionCounts[qid]||0)+1;
+            break;
+          }
         }
       }
+      xpPerDay[dk] = dayXP;
+      completionsPerDay[dk] = n;
+
+      // Category per day
       var activeQs = 0, completedQs = 0;
       var cats = {};
       for (var qi2 in S.quests) {
@@ -164,17 +183,100 @@
     }
     for (var sid in S.streaks) { if (S.streaks[sid].best>bestStreak) bestStreak=S.streaks[sid].best; }
 
+    // Weekly data (7 days)
     var wk = weekKeys();
     var wkData = [];
     for (var ki=0;ki<wk.length;ki++) {
       var d2 = S.completions[wk[ki]]||{};
-      wkData.push({date:wk[ki],completed:Object.keys(d2).length,total:S.quests.filter(function(q){return q.active;}).length});
+      wkData.push({date:wk[ki],completed:Object.keys(d2).length,total:S.quests.filter(function(q){return q.active;}).length,
+        xp:xpPerDay[wk[ki]]||0});
+    }
+
+    // 30-day completion rate trend
+    var trendData = [];
+    var now = new Date();
+    for (var ti=29;ti>=0;ti--) {
+      var td = new Date(now); td.setDate(td.getDate()-ti);
+      var tdKey = td.toISOString().split("T")[0];
+      var activeCount = S.quests.filter(function(q){return q.active;}).length;
+      var compCount = (S.completions[tdKey]||{});
+      var compN = Object.keys(compCount).length;
+      trendData.push({date:tdKey,rate:activeCount>0?Math.round((compN/activeCount)*100):0,completed:compN,total:activeCount});
+    }
+
+    // Cumulative XP chart (last 30 days)
+    var xpChartData = [];
+    var runningXP = 0;
+    for (var xi=29;xi>=0;xi--) {
+      var xd = new Date(now); xd.setDate(xd.getDate()-xi);
+      var xKey = xd.toISOString().split("T")[0];
+      // Calculate XP up to this date
+      var xpSoFar = 0;
+      for (var xdk in S.completions) {
+        if (xdk <= xKey) {
+          for (var xqid in S.completions[xdk]) {
+            for (var xqi=0;xqi<S.quests.length;xqi++) {
+              if (S.quests[xqi].id===xqid) { xpSoFar += xpForDiff(S.quests[xqi].diff); break; }
+            }
+          }
+        }
+      }
+      xpChartData.push({date:xKey,xp:xpSoFar});
+    }
+
+    // Top quests leaderboard
+    var topQuests = [];
+    for (var tqId in questCompletionCounts) {
+      for (var tqi=0;tqi<S.quests.length;tqi++) {
+        if (S.quests[tqi].id===tqId) {
+          topQuests.push({name:S.quests[tqi].name,count:questCompletionCounts[tqId],cat:S.quests[tqi].cat});
+          break;
+        }
+      }
+    }
+    topQuests.sort(function(a,b){return b.count-a.count;});
+    topQuests = topQuests.slice(0,5);
+
+    // This week vs last week
+    var thisWeekStart = new Date(now);
+    var dayOfWeek = thisWeekStart.getDay();
+    thisWeekStart.setDate(thisWeekStart.getDate()-dayOfWeek);
+    var thisWeekKey = thisWeekStart.toISOString().split("T")[0];
+    var lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate()-7);
+    var lastWeekKey = lastWeekStart.toISOString().split("T")[0];
+
+    var thisWeekXP=0,thisWeekComp=0,lastWeekXP=0,lastWeekComp=0;
+    for (var dwk in S.completions) {
+      var dwkN = Object.keys(S.completions[dwk]).length;
+      if (dwk >= thisWeekKey) {
+        thisWeekXP += xpPerDay[dwk]||0;
+        thisWeekComp += dwkN;
+      } else if (dwk >= lastWeekKey) {
+        lastWeekXP += xpPerDay[dwk]||0;
+        lastWeekComp += dwkN;
+      }
+    }
+
+    // Heatmap data (last 90 days)
+    var heatmapData = [];
+    for (var hi=89;hi>=0;hi--) {
+      var hd = new Date(now); hd.setDate(hd.getDate()-hi);
+      var hKey = hd.toISOString().split("T")[0];
+      var hComp = (S.completions[hKey]||{});
+      var hN = Object.keys(hComp).length;
+      var hActive = S.quests.filter(function(q){return q.active;}).length;
+      heatmapData.push({date:hKey,completed:hN,total:hActive,pct:hActive>0?Math.round((hN/hActive)*100):0,dayOfWeek:hd.getDay()});
     }
 
     return { totalXP:S.totalXP, level:S.level, levelTitle:lvlTitle(S.level),
       totalCompleted:totalCompleted, bestStreak:bestStreak, balancedDays:balancedDays,
       earlyBirdDays:earlyBirdDays, nightOwlDays:nightOwlDays, perfectDays:perfectDays,
-      categoryCounts:catCounts, weeklyData:wkData };
+      categoryCounts:catCounts, weeklyData:wkData, trendData:trendData,
+      xpChartData:xpChartData, topQuests:topQuests,
+      thisWeekXP:thisWeekXP, lastWeekXP:lastWeekXP,
+      thisWeekComp:thisWeekComp, lastWeekComp:lastWeekComp,
+      heatmapData:heatmapData };
   }
 
   /* ========== ACTIONS ========== */
@@ -625,6 +727,54 @@
     html += '<div class="stat-card"><div class="stat-card-icon" style="color:#22c55e">\u2705</div><div class="stat-card-value">'+fmtN(st.totalCompleted)+'</div><div class="stat-card-label">Quests Completed</div></div>';
     html += '</div>';
 
+    // === NEW: This Week vs Last Week ===
+    var xpChange = st.lastWeekXP>0 ? Math.round(((st.thisWeekXP-st.lastWeekXP)/st.lastWeekXP)*100) : 0;
+    var compChange = st.lastWeekComp>0 ? Math.round(((st.thisWeekComp-st.lastWeekComp)/st.lastWeekComp)*100) : 0;
+    html += '<div class="chart-section"><h2 class="chart-title">\uD83D\uDD04 Week Comparison</h2>';
+    html += '<div class="week-comparison">';
+    html += '<div class="week-col"><div class="week-label">This Week</div>';
+    html += '<div class="week-val" style="color:#22c55e">'+st.thisWeekXP+' XP</div>';
+    html += '<div class="week-val">'+st.thisWeekComp+' quests</div></div>';
+    html += '<div class="week-col"><div class="week-label">Last Week</div>';
+    html += '<div class="week-val">'+st.lastWeekXP+' XP</div>';
+    html += '<div class="week-val">'+st.lastWeekComp+' quests</div></div>';
+    html += '<div class="week-col"><div class="week-label">Change</div>';
+    html += '<div class="week-val" style="color:'+(xpChange>=0?'#22c55e':'#ef4444')+'">'+(xpChange>=0?'+':'')+xpChange+'%</div>';
+    html += '<div class="week-val" style="color:'+(compChange>=0?'#22c55e':'#ef4444')+'">'+(compChange>=0?'+':'')+compChange+'%</div></div>';
+    html += '</div></div>';
+
+    // === NEW: Level Progress Donut ===
+    var xpForCur = xpForCurrentLevel();
+    var xpNeeded = xpForLv(st.level);
+    var xpProgress = st.totalXP - xpForCur;
+    var xpPct = Math.min((xpProgress/xpNeeded)*100, 100);
+    var donutR = 50, donutC = 2*Math.PI*donutR;
+    var donutOff = donutC*(1-xpPct/100);
+
+    html += '<div class="chart-section"><h2 class="chart-title">\uD83C\uDF96\uFE0F Level Progress</h2>';
+    html += '<div class="level-donut-wrap">';
+    html += '<svg class="level-donut" width="120" height="120">';
+    html += '<circle cx="60" cy="60" r="'+donutR+'" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>';
+    html += '<circle cx="60" cy="60" r="'+donutR+'" fill="none" stroke="#b44aff" stroke-width="10" stroke-dasharray="'+donutC+'" stroke-dashoffset="'+donutOff+'" transform="rotate(-90 60 60)" stroke-linecap="round"/>';
+    html += '</svg>';
+    html += '<div class="level-donut-text"><span class="level-donut-num">'+st.level+'</span><span class="level-donut-label">'+esc(st.levelTitle)+'</span>';
+    html += '<span class="level-donut-xp">'+xpProgress+'/'+xpNeeded+' XP</span></div></div></div>';
+
+    // === NEW: XP Progress Line Chart (30 days) ===
+    html += '<div class="chart-section"><h2 class="chart-title">\uD83D\uDCC8 XP Progress (30 Days)</h2>';
+    html += renderLineChart(st.xpChartData, "xp");
+    html += '</div>';
+
+    // === NEW: Streak Heatmap ===
+    html += '<div class="chart-section"><h2 class="chart-title">\uD83D\uDD25 Activity Heatmap (90 Days)</h2>';
+    html += renderHeatmap(st.heatmapData);
+    html += '</div>';
+
+    // === NEW: Completion Rate Trend ===
+    html += '<div class="chart-section"><h2 class="chart-title">\uD83D\uDCC9 Completion Rate (30 Days)</h2>';
+    html += renderLineChart(st.trendData, "rate");
+    html += '</div>';
+
     // Weekly bar chart
     html += '<div class="chart-section"><h2 class="chart-title">Weekly Activity</h2><div class="bar-chart">';
     for (var ki=0;ki<wd.length;ki++) {
@@ -648,6 +798,21 @@
     }
     html += '</div></div>';
 
+    // === NEW: Top Quests Leaderboard ===
+    if (st.topQuests.length > 0) {
+      html += '<div class="chart-section"><h2 class="chart-title">\uD83C\uDFC6 Top Quests</h2><div class="leaderboard">';
+      var medals = ["\uD83E\uDD47","\uD83E\uDD48","\uD83E\uDD49","4","5"];
+      for (var li=0;li<st.topQuests.length;li++) {
+        var tq = st.topQuests[li];
+        html += '<div class="leader-row">';
+        html += '<span class="leader-rank">'+medals[li]+'</span>';
+        html += '<span class="leader-name">'+esc(tq.name)+'</span>';
+        html += '<span class="leader-count">'+tq.count+'x</span>';
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+
     // Milestones
     html += '<div class="chart-section"><h2 class="chart-title">Milestones</h2><div class="milestone-grid">';
     html += '<div class="milestone'+(st.perfectDays>0?' unlocked':'')+'"><span class="milestone-icon">\u2728</span><div class="milestone-info"><div class="milestone-name">Perfect Days</div><div class="milestone-value">'+st.perfectDays+'</div></div></div>';
@@ -657,6 +822,127 @@
     html += '</div></div>';
 
     document.getElementById("main-content").innerHTML = html;
+  }
+
+  /* ========== CHART RENDERERS ========== */
+
+  // SVG Line Chart with smooth curves and gradient fill
+  function renderLineChart(data, type) {
+    if (!data || data.length === 0) return '<div class="chart-empty">No data yet</div>';
+
+    var W = 600, H = 160, pad = 30;
+    var chartW = W - pad*2, chartH = H - pad*2;
+
+    var values = data.map(function(d){ return type==="xp"?d.xp:d.rate; });
+    var maxV = Math.max.apply(null, values) || 1;
+    var minV = type==="rate"?0:Math.min.apply(null, values);
+
+    if (maxV === minV) { maxV = minV + 1; }
+
+    // Build points
+    var points = [];
+    for (var i=0;i<data.length;i++) {
+      var x = pad + (i/(data.length-1||1))*chartW;
+      var y = pad + chartH - ((values[i]-minV)/(maxV-minV))*chartH;
+      points.push({x:x,y:y});
+    }
+
+    // Build smooth path
+    var pathD = "M"+points[0].x+","+points[0].y;
+    for (var pi=1;pi<points.length;pi++) {
+      var prev = points[pi-1];
+      var curr = points[pi];
+      var cpx1 = prev.x + (curr.x-prev.x)/3;
+      var cpy1 = prev.y;
+      var cpx2 = curr.x - (curr.x-prev.x)/3;
+      var cpy2 = curr.y;
+      pathD += " C"+cpx1+","+cpy1+" "+cpx2+","+cpy2+" "+curr.x+","+curr.y;
+    }
+
+    // Area fill path
+    var areaD = pathD + " L"+points[points.length-1].x+","+(pad+chartH)+" L"+points[0].x+","+(pad+chartH)+" Z";
+    var color = type==="xp"?"#a855f7":"#06b6d4";
+    var colorRgb = type==="xp"?"168,85,247":"6,182,212";
+
+    var svg = '<div class="line-chart-wrap"><svg viewBox="0 0 '+W+' '+H+'" class="line-chart-svg">';
+    svg += '<defs><linearGradient id="lcg-'+type+'" x1="0" y1="0" x2="0" y2="1">';
+    svg += '<stop offset="0%" stop-color="rgba('+colorRgb+',0.3)"/>';
+    svg += '<stop offset="100%" stop-color="rgba('+colorRgb+',0.02)"/>';
+    svg += '</linearGradient></defs>';
+    svg += '<path d="'+areaD+'" fill="url(#lcg-'+type+')"/>';
+    svg += '<path d="'+pathD+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round"/>';
+
+    // Y-axis labels
+    svg += '<text x="'+(pad-4)+'" y="'+(pad+4)+'" fill="#6a6a80" font-size="10" text-anchor="end">'+maxV+'</text>';
+    svg += '<text x="'+(pad-4)+'" y="'+(pad+chartH/2+4)+'" fill="#6a6a80" font-size="10" text-anchor="end">'+Math.round((maxV+minV)/2)+'</text>';
+    svg += '<text x="'+(pad-4)+'" y="'+(pad+chartH+4)+'" fill="#6a6a80" font-size="10" text-anchor="end">'+minV+'</text>';
+
+    // X-axis labels (5 evenly spaced)
+    for (var xl=0;xl<5;xl++) {
+      var xIdx = Math.round((xl/4)*(data.length-1));
+      var d = new Date(data[xIdx].date+"T12:00:00");
+      var lbl = d.getDate()+"/"+(d.getMonth()+1);
+      svg += '<text x="'+points[xIdx].x+'" y="'+(H-2)+'" fill="#6a6a80" font-size="9" text-anchor="middle">'+lbl+'</text>';
+    }
+
+    svg += '</svg></div>';
+    return svg;
+  }
+
+  // GitHub-style Contribution Heatmap
+  function renderHeatmap(data) {
+    if (!data || data.length === 0) return '<div class="chart-empty">No data yet</div>';
+
+    // Organize into 13 weeks x 7 days (Sunday-Saturday)
+    var html = '<div class="heatmap-wrap">';
+    // Month labels on top
+    html += '<div class="heatmap-months">';
+    for (var mi=0;mi<13;mi++) {
+      var md = new Date(data[mi*7].date+"T12:00:00");
+      var mNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      html += '<span class="heatmap-mo-label" style="margin-left:'+(mi*16)+'px">'+mNames[md.getMonth()]+'</span>';
+    }
+    html += '</div>';
+
+    html += '<div class="heatmap-body">';
+    // Day labels
+    var dayLabels = ["","Mon","","","Wed","",""];
+    html += '<div class="heatmap-day-labels">';
+    for (var dli=0;dli<7;dli++) {
+      html += '<span class="heatmap-dl-label">'+dayLabels[dli]+'</span>';
+    }
+    html += '</div>';
+
+    // Grid: 13 columns (weeks), 7 rows (days)
+    html += '<div class="heatmap-grid">';
+    for (var col=0;col<13;col++) {
+      html += '<div class="heatmap-col">';
+      for (var row=0;row<7;row++) {
+        var idx = col*7+row;
+        if (idx >= data.length) {
+          html += '<div class="heatmap-cell heatmap-empty"></div>';
+          continue;
+        }
+        var d = data[idx];
+        var level = d.pct===0?0:d.pct<=25?1:d.pct<=50?2:d.pct<=75?3:4;
+        html += '<div class="heatmap-cell heatmap-l'+level+'" title="'+d.date+': '+d.completed+'/'+d.total+' ('+d.pct+'%)"></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    // Legend
+    html += '<div class="heatmap-legend">';
+    html += '<span>Less</span>';
+    html += '<div class="heatmap-cell heatmap-l0"></div>';
+    html += '<div class="heatmap-cell heatmap-l1"></div>';
+    html += '<div class="heatmap-cell heatmap-l2"></div>';
+    html += '<div class="heatmap-cell heatmap-l3"></div>';
+    html += '<div class="heatmap-cell heatmap-l4"></div>';
+    html += '<span>More</span></div>';
+
+    html += '</div>';
+    return html;
   }
 
   /* ========== RENDER: ACHIEVEMENTS ========== */
