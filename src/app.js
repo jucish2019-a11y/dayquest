@@ -63,7 +63,7 @@
     } catch(e) {}
     var quests = [];
     for (var i = 0; i < DEFAULTS.length; i++) quests.push(JSON.parse(JSON.stringify(DEFAULTS[i])));
-    return { version:"v1", quests:quests, completions:{}, totalXP:0, level:1, unlocked:[], streaks:{}, settings:{ xpMul:1, sound:true } };
+    return { version:"v1", quests:quests, completions:{}, totalXP:0, level:1, unlocked:[], streaks:{}, settings:{ xpMul:1, sound:true, cursor:"star", hideCompleted:false, sortOrder:"default", themeColor:"purple", compactMode:false } };
   }
 
   function saveState() {
@@ -317,9 +317,21 @@
   /* ========== RENDER: HOME ========== */
   function renderHome() {
     var tc = S.completions[todayKey()]||{};
+    var s = S.settings;
     var aq = S.quests.filter(function(q){return q.active;});
+
+    // Sort quests
+    if (s.sortOrder === "alphabetical") {
+      aq.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    }
+    // "default" keeps definition order (original array order)
+
+    if (s.hideCompleted) {
+      aq = aq.filter(function(q){ return !tc[q.id]; });
+    }
+
     var cc = Object.keys(tc).length;
-    var total = aq.length;
+    var total = S.quests.filter(function(q){return q.active;}).length;
     var pct = total>0 ? Math.round((cc/total)*100) : 0;
     var circ = 2*Math.PI*34;
     var offset = circ*(1-pct/100);
@@ -385,15 +397,24 @@
 
         // Stagger entrance animation
         var staggerDelay = Math.min(qi * 60, 300);
-        html += '<div class="quest-card'+(done?' completed':'')+' stagger-enter" data-quest-id="'+q.id+'" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+';animation-delay:'+staggerDelay+'ms">';
+        html += '<div class="quest-card'+(done?' completed':'')+' stagger-enter'+(s.compactMode?' compact':'')+'" data-quest-id="'+q.id+'" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+';animation-delay:'+staggerDelay+'ms">';
         html += '<div class="quest-check'+(done?' checked':'')+'" onclick="toggleComplete(\''+q.id+'\')">'+(done?'\u2713':'')+'</div>';
-        html += '<div class="quest-info">';
-        html += '<div class="quest-name'+(done?' completed-text':'')+'">'+esc(q.name)+'</div>';
-        html += '<div class="quest-meta">';
-        html += '<span class="quest-difficulty">'+dl+' '+q.diff+'</span>';
-        html += '<span class="quest-xp">+'+XP[q.diff]+' XP</span>';
-        if (done) html += '<span class="quest-time">\u2713 '+tc[q.id].time+'</span>';
-        html += '</div></div>';
+        if (!s.compactMode) {
+          html += '<div class="quest-info">';
+          html += '<div class="quest-name'+(done?' completed-text':'')+'">'+esc(q.name)+'</div>';
+          html += '<div class="quest-meta">';
+          html += '<span class="quest-difficulty">'+dl+' '+q.diff+'</span>';
+          html += '<span class="quest-xp">+'+XP[q.diff]+' XP</span>';
+          if (done) html += '<span class="quest-time">\u2713 '+tc[q.id].time+'</span>';
+          html += '</div></div>';
+        } else {
+          html += '<div class="quest-info">';
+          html += '<div class="quest-name'+(done?' completed-text':'')+'">'+esc(q.name)+'</div>';
+          html += '<div class="quest-meta">';
+          html += '<span class="quest-difficulty">'+dl+'</span>';
+          html += '<span class="quest-xp">+'+XP[q.diff]+'</span>';
+          html += '</div></div>';
+        }
         html += '<button class="quest-menu-btn" onclick="event.stopPropagation();showQMenu(\''+q.id+'\',this)">\u22EF</button>';
         html += '</div>';
       }
@@ -685,18 +706,46 @@
     html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Cursor Style</div><div class="setting-desc">Choose your quest cursor appearance</div></div>';
     html += '<select class="setting-select" onchange="changeCursor(this.value)">';
     var cursors = [
-      {id:"star",name:"\u272F Magic Star",desc:"Purple RPG star"},
-      {id:"sword",name:"\uD83D\uDDE1\uFE0F Sword",desc:"RPG blade"},
-      {id:"potion",name:"\uD83E\uDDEA Potion",desc:"Alchemist flask"},
-      {id:"shield",name:"\uD83D\uDEE1\uFE0F Shield",desc:"Guardian emblem"},
-      {id:"scroll",name:"\uD83D\uDCDC Scroll",desc:"Ancient parchment"},
-      {id:"default",name:"\uD83D\uDDB1\uFE0F System Default",desc:"Your OS cursor"}
+      {id:"star",name:"\u272F Magic Star"},
+      {id:"sword",name:"\uD83D\uDDE1\uFE0F Sword"},
+      {id:"potion",name:"\uD83E\uDDEA Potion"},
+      {id:"shield",name:"\uD83D\uDEE1\uFE0F Shield"},
+      {id:"scroll",name:"\uD83D\uDCDC Scroll"},
+      {id:"default",name:"\uD83D\uDDB1\uFE0F System Default"}
     ];
     var curCursor = s.cursor||"star";
     for (var ci2=0;ci2<cursors.length;ci2++) {
       html += '<option value="'+cursors[ci2].id+'"'+(curCursor===cursors[ci2].id?' selected':'')+'>'+cursors[ci2].name+'</option>';
     }
+    html += '</select></div>';
+
+    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Theme Color</div><div class="setting-desc">Primary accent color for the UI</div></div>';
+    html += '<select class="setting-select" onchange="changeTheme(this.value)">';
+    var themes = [
+      {id:"purple",name:"\uD83D\uDFE3 Purple Realm",hex:"#b44aff"},
+      {id:"cyan",name:"\uD83D\uDD35 Cyan Depths",hex:"#06b6d4"},
+      {id:"amber",name:"\uD83D\uDFE0 Amber Glow",hex:"#f59e0b"},
+      {id:"rose",name:"\uD83D\uDFE5 Rose Flame",hex:"#f43f5e"},
+      {id:"emerald",name:"\uD83D\uDFE2 Emerald Forest",hex:"#10b981"}
+    ];
+    var curTheme = s.themeColor||"purple";
+    for (var ti=0;ti<themes.length;ti++) {
+      html += '<option value="'+themes[ti].id+'"'+(curTheme===themes[ti].id?' selected':'')+'>'+themes[ti].name+'</option>';
+    }
+    html += '</select></div>';
+
+    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Quest Sort Order</div><div class="setting-desc">How quests are arranged on the board</div></div>';
+    html += '<select class="setting-select" onchange="changeSortOrder(this.value)">';
+    html += '<option value="default"'+(s.sortOrder==="default"?' selected':'')+'>Default (your order)</option>';
+    html += '<option value="alphabetical"'+(s.sortOrder==="alphabetical"?' selected':'')+'>Alphabetical (A-Z)</option>';
     html += '</select></div></div>';
+
+    html += '<div class="settings-section"><h2 class="settings-section-title">Display</h2>';
+    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Hide Completed Quests</div><div class="setting-desc">Remove completed quests from the board</div></div>';
+    html += '<button class="toggle'+(s.hideCompleted?' on':'')+'" onclick="toggleHideCompleted(this)"><div class="toggle-knob"></div></button></div>';
+
+    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Compact Mode</div><div class="setting-desc">Smaller quest cards for more quests on screen</div></div>';
+    html += '<button class="toggle'+(s.compactMode?' on':'')+'" onclick="toggleCompact(this)"><div class="toggle-knob"></div></button></div></div>';
 
     html += '<div class="settings-section"><h2 class="settings-section-title">Data</h2>';
     html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Export Data</div><div class="setting-desc">Download your quest data as JSON</div></div>';
@@ -706,8 +755,11 @@
     html += '<button class="btn btn-secondary" onclick="document.getElementById(\'import-file\').click()">Import</button>';
     html += '<input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(this)"></div>';
 
+    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Reset Quests to Default</div><div class="setting-desc">Restore the original 16 quests. Keeps your XP, level, streaks, and achievements.</div></div>';
+    html += '<button class="btn btn-warning" onclick="resetQuests()">Reset Quests</button></div>';
+
     html += '<div class="setting-item danger-zone"><div class="setting-info"><div class="setting-name">Reset All Data</div><div class="setting-desc">Permanently delete all quests, completions, XP, and achievements</div></div>';
-    html += '<button class="btn btn-danger" onclick="resetAll()">Reset</button></div></div>';
+    html += '<button class="btn btn-danger" onclick="resetAll()">Reset Everything</button></div></div>';
 
     html += '<div class="settings-section"><h2 class="settings-section-title">About</h2>';
     html += '<div class="about-card"><div class="about-name">DayQuest</div><div class="about-version">v1.0.0</div>';
@@ -730,7 +782,88 @@
     btn.classList.toggle("on", S.settings.sound);
   }
 
-  /* ========== CURSOR SYSTEM ========== */
+  /* ========== NEW SETTINGS HANDLERS ========== */
+
+  function toggleHideCompleted(btn) {
+    S.settings.hideCompleted = !S.settings.hideCompleted;
+    saveState();
+    btn.classList.toggle("on", S.settings.hideCompleted);
+    toast(S.settings.hideCompleted ? "Completed quests hidden" : "Completed quests visible", "info");
+  }
+
+  function toggleCompact(btn) {
+    S.settings.compactMode = !S.settings.compactMode;
+    saveState();
+    btn.classList.toggle("on", S.settings.compactMode);
+    toast(S.settings.compactMode ? "Compact mode enabled" : "Compact mode disabled", "info");
+  }
+
+  function changeTheme(v) {
+    S.settings.themeColor = v;
+    saveState();
+    applyTheme(v);
+    toast("Theme updated", "success");
+  }
+
+  function changeSortOrder(v) {
+    S.settings.sortOrder = v;
+    saveState();
+    toast("Sort order updated", "info");
+  }
+
+  function resetQuests() {
+    if (!confirm("Reset all quests to default? This will NOT affect your XP, level, streaks, or achievements.")) return;
+    var newQuests = [];
+    for (var i = 0; i < DEFAULTS.length; i++) newQuests.push(JSON.parse(JSON.stringify(DEFAULTS[i])));
+    // Keep completions for matching quest names (by name match, not ID)
+    var oldQuestNames = S.quests.map(function(q) { return q.name; });
+    S.quests = newQuests;
+    // Remove completions for quests that no longer exist
+    for (var dk in S.completions) {
+      for (var qid in S.completions[dk]) {
+        var found = false;
+        for (var qi = 0; qi < S.quests.length; qi++) {
+          if (S.quests[qi].id === qid) { found = true; break; }
+        }
+        if (!found) delete S.completions[dk][qid];
+      }
+    }
+    // Remove streaks for removed quests
+    for (var sid in S.streaks) {
+      var found2 = false;
+      for (var qi2 = 0; qi2 < S.quests.length; qi2++) {
+        if (S.quests[qi2].id === sid) { found2 = true; break; }
+      }
+      if (!found2) delete S.streaks[sid];
+    }
+    saveState();
+    toast("Quests restored to default", "success");
+    navigateTo("home");
+  }
+
+  /* ========== THEME SYSTEM ========== */
+  var THEME_COLORS = {
+    purple: { primary: "#b44aff", primaryRgb: "180,74,255" },
+    cyan:   { primary: "#06b6d4", primaryRgb: "6,182,212" },
+    amber:  { primary: "#f59e0b", primaryRgb: "245,158,11" },
+    rose:   { primary: "#f43f5e", primaryRgb: "244,63,94" },
+    emerald:{ primary: "#10b981", primaryRgb: "16,185,129" }
+  };
+
+  function applyTheme(v) {
+    var theme = THEME_COLORS[v];
+    if (!theme) return;
+    var css = ':root{--mind:'+theme.primary+' !important;}'+
+      '.nav-link.active{border-left-color:'+theme.primary+' !important;box-shadow:0 0 16px rgba('+theme.primaryRgb+',0.25) !important;}'+
+      '.nav-link.active .nav-icon{filter:drop-shadow(0 0 4px rgba('+theme.primaryRgb+',0.6)) !important;}';
+    var styleEl = document.getElementById("custom-theme-style");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "custom-theme-style";
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = css;
+  }
   var CURSOR_MAP = {
     star:   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L14 10L22 12L14 14L12 22L10 14L2 12L10 10Z' fill='%23b44aff' stroke='%23c084fc' stroke-width='0.5'/%3E%3C/svg%3E",
     sword:  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='M6.92 5L5 7l4 4-3 3 3 3 1.5-1.5L14 19l1-1-3.5-3.5L13 13l3 3 1.5-1.5-3.5-3.5L17 8l-4-4-3 3L6.92 5z' fill='%23e0e0e0' stroke='%23b44aff' stroke-width='0.5'/%3E%3C/svg%3E",
@@ -810,6 +943,7 @@
   function init() {
     initState();
     applyCursor(S.settings.cursor||"star");
+    applyTheme(S.settings.themeColor||"purple");
     navigateTo("home");
   }
 
@@ -828,8 +962,13 @@
   window.changeXpMul = changeXpMul;
   window.toggleSound = toggleSound;
   window.changeCursor = changeCursor;
+  window.changeTheme = changeTheme;
+  window.changeSortOrder = changeSortOrder;
+  window.toggleHideCompleted = toggleHideCompleted;
+  window.toggleCompact = toggleCompact;
   window.exportData = exportData;
   window.importData = importData;
+  window.resetQuests = resetQuests;
   window.resetAll = resetAll;
 
   if (document.readyState === "loading") {

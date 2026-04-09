@@ -1367,3 +1367,44 @@ body {
 .quest-card.stagger-enter {
   animation: stagger-card-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* ---- Compact Mode ---- */
+.quest-card.compact {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  min-height: auto;
+}
+
+.quest-card.compact .quest-check {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  font-size: 12px;
+}
+
+.quest-card.compact .quest-name {
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.quest-card.compact .quest-meta {
+  font-size: 10px;
+}
+
+.quest-card.compact .quest-menu-btn {
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+}
+
+/* ---- Warning Button ---- */
+.btn-warning {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+
+.btn-warning:hover {
+  background: rgba(245,158,11,0.25);
+  border-color: rgba(245,158,11,0.5);
+}
