@@ -367,21 +367,45 @@
     if (tc[id]) {
       undoQuest(id);
       toast("Quest undone","info");
+      renderHome();
+      updateNavbar();
     } else {
-      var r = completeQuest(id);
-      if (r) {
-        toast("+"+r.xp+" XP earned!","success");
-        if (r.levelUp) toast("\uD83C\uDF89 Level Up! You're now Level "+r.newLevel+"!","success",5000);
-        if (r.newAch.length>0) {
-          for (var i=0;i<r.newAch.length;i++) {
-            achOverlay(r.newAch[i]);
-            toast("\uD83C\uDFC6 Achievement: "+r.newAch[i].name,"success",2500);
+      // Find the card element and play celebration animation
+      var card = document.querySelector('.quest-card[data-quest-id="'+id+'"]');
+      if (card) {
+        card.classList.add("celebrating");
+        // Wait for animation to finish, then re-render
+        setTimeout(function() {
+          var r = completeQuest(id);
+          if (r) {
+            toast("+"+r.xp+" XP earned!","success");
+            if (r.levelUp) toast("\uD83C\uDF89 Level Up! You're now Level "+r.newLevel+"!","success",5000);
+            if (r.newAch.length>0) {
+              for (var i=0;i<r.newAch.length;i++) {
+                achOverlay(r.newAch[i]);
+                toast("\uD83C\uDFC6 Achievement: "+r.newAch[i].name,"success",2500);
+              }
+            }
+          }
+          renderHome();
+          updateNavbar();
+        }, 400);
+      } else {
+        var r = completeQuest(id);
+        if (r) {
+          toast("+"+r.xp+" XP earned!","success");
+          if (r.levelUp) toast("\uD83C\uDF89 Level Up! You're now Level "+r.newLevel+"!","success",5000);
+          if (r.newAch.length>0) {
+            for (var i=0;i<r.newAch.length;i++) {
+              achOverlay(r.newAch[i]);
+              toast("\uD83C\uDFC6 Achievement: "+r.newAch[i].name,"success",2500);
+            }
           }
         }
+        renderHome();
+        updateNavbar();
       }
     }
-    renderHome();
-    updateNavbar();
   }
 
   function showQMenu(id) {
@@ -612,9 +636,6 @@
     html += '<option value="1.5"'+(s.xpMul===1.5?' selected':'')+'>1.5x - Bonus XP</option>';
     html += '<option value="2"'+(s.xpMul===2?' selected':'')+'>2x - Double XP</option>';
     html += '</select></div>';
-
-    html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Sound Effects</div><div class="setting-desc">Play sounds when completing quests</div></div>';
-    html += '<button class="toggle'+(s.sound?' on':'')+'" onclick="toggleSound(this)"><div class="toggle-knob"></div></button></div>';
 
     html += '<div class="setting-item"><div class="setting-info"><div class="setting-name">Cursor Style</div><div class="setting-desc">Choose your quest cursor appearance</div></div>';
     html += '<select class="setting-select" onchange="changeCursor(this.value)">';
