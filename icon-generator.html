@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayQuest Icon Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0a0a0f;
+      color: #f0f0f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 24px;
+      padding: 24px;
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      color: #b44aff;
+      text-shadow: 0 0 20px rgba(180,74,255,0.3);
+    }
+    .desc {
+      color: #a0a0b4;
+      font-size: 14px;
+      text-align: center;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    .preview {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+    }
+    .preview-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .preview-label {
+      font-size: 12px;
+      color: #6a6a80;
+    }
+    canvas {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      image-rendering: pixelated;
+    }
+    .btn {
+      background: #b44aff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn:hover {
+      background: #9333ea;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(180,74,255,0.3);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn-secondary {
+      background: #22222f;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-secondary:hover {
+      background: #2a2a38;
+      border-color: rgba(255,255,255,0.2);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+    .status {
+      font-size: 13px;
+      color: #22c55e;
+      min-height: 20px;
+    }
+  </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap">
+</head>
+<body>
+  <h1>&#x2694;&#xFE0F; DayQuest Icon Generator</h1>
+  <p class="desc">Generates PWA app icons (192x192 and 512x512) programmatically. Click the button to download both sizes instantly.</p>
+
+  <div class="preview">
+    <div class="preview-item">
+      <canvas id="canvas-192" width="192" height="192"></canvas>
+      <span class="preview-label">192&times;192</span>
+    </div>
+    <div class="preview-item">
+      <canvas id="canvas-512" width="512" height="512"></canvas>
+      <span class="preview-label">512&times;512</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="downloadIcons()">&#x1F4E5; Download Icons</button>
+    <button class="btn btn-secondary" onclick="drawIcons()">&#x1F504; Redraw</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script>
+    function drawSword(ctx, cx, cy, size) {
+      var s = size / 100;
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Blade
+      ctx.beginPath();
+      ctx.moveTo(0, -40 * s);
+      ctx.lineTo(8 * s, -10 * s);
+      ctx.lineTo(8 * s, 15 * s);
+      ctx.lineTo(-8 * s, 15 * s);
+      ctx.lineTo(-8 * s, -10 * s);
+      ctx.closePath();
+      ctx.fillStyle = "#e0e0e8";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.3)";
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+
+      // Crossguard
+      ctx.beginPath();
+      ctx.moveTo(-25 * s, 15 * s);
+      ctx.quadraticCurveTo(0, 10 * s, 25 * s, 15 * s);
+      ctx.lineTo(25 * s, 22 * s);
+      ctx.quadraticCurveTo(0, 18 * s, -25 * s, 22 * s);
+      ctx.closePath();
+      ctx.fillStyle = "#b44aff";
+      ctx.fill();
+      ctx.shadowColor = "rgba(180,74,255,0.6)";
+      ctx.shadowBlur = 8 * s;
+
+      // Handle
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(-6 * s, 22 * s);
+      ctx.lineTo(6 * s, 22 * s);
+      ctx.lineTo(6 * s, 40 * s);
+      ctx.lineTo(-6 * s, 40 * s);
+      ctx.closePath();
+      ctx.fillStyle = "#8b6f47";
+      ctx.fill();
+
+      // Pommel
+      ctx.beginPath();
+      ctx.arc(0, 44 * s, 8 * s, 0, Math.PI * 2);
+      ctx.fillStyle = "#b44aff";
+      ctx.fill();
+
+      // Blade shine
+      ctx.beginPath();
+      ctx.moveTo(0, -38 * s);
+      ctx.lineTo(3 * s, -10 * s);
+      ctx.lineTo(0, -10 * s);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawIcon(size) {
+      var canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      var ctx = canvas.getContext("2d");
+
+      // Background gradient
+      var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size * 0.7);
+      grad.addColorStop(0, "#1a1a2e");
+      grad.addColorStop(1, "#0d0d14");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+
+      // Rounded rectangle
+      var r = size * 0.18;
+      var x = size * 0.05;
+      var y = size * 0.05;
+      var w = size * 0.9;
+      var h = size * 0.9;
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+      ctx.fill();
+
+      // Border glow
+      ctx.strokeStyle = "rgba(180,74,255,0.4)";
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+
+      // Outer glow
+      ctx.shadowColor = "rgba(180,74,255,0.3)";
+      ctx.shadowBlur = size * 0.08;
+      ctx.strokeStyle = "rgba(180,74,255,0.2)";
+      ctx.lineWidth = size * 0.01;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Draw sword icon
+      drawSword(ctx, size / 2, size / 2, size * 0.55);
+
+      return canvas;
+    }
+
+    function drawIcons() {
+      var c192 = drawIcon(192);
+      var c512 = drawIcon(512);
+
+      var target192 = document.getElementById("canvas-192");
+      var target512 = document.getElementById("canvas-512");
+
+      target192.getContext("2d").drawImage(c192, 0, 0);
+      target512.getContext("2d").drawImage(c512, 0, 0);
+    }
+
+    function downloadIcons() {
+      var status = document.getElementById("status");
+      status.textContent = "";
+
+      // 192x192
+      var c192 = drawIcon(192);
+      c192.toBlob(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "icon-192.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // 512x512
+        var c512 = drawIcon(512);
+        c512.toBlob(function(blob2) {
+          var url2 = URL.createObjectURL(blob2);
+          var a2 = document.createElement("a");
+          a2.href = url2;
+          a2.download = "icon-512.png";
+          document.body.appendChild(a2);
+          a2.click();
+          document.body.removeChild(a2);
+          URL.revokeObjectURL(url2);
+
+          status.textContent = "\u2705 Icons downloaded!";
+        });
+      });
+    }
+
+    // Draw on load
+    drawIcons();
+  </script>
+</body>
+</html>

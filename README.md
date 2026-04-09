@@ -45,6 +45,12 @@
 - **Data export/import** — backup and restore your progress as JSON
 - **Full data reset** — start fresh anytime
 
+### 📱 Progressive Web App (PWA)
+- **Installable on any device** — home screen icon, fullscreen mode, no browser chrome
+- **Works offline** — service worker caches all assets
+- **Cross-platform** — iOS Safari, Android Chrome, desktop browsers
+- **Instant loading** — cached files, no network needed after first visit
+
 ---
 
 ## 🎮 Play Now
@@ -70,6 +76,31 @@ xdg-open index.html
 ```
 
 That's it. **Zero dependencies. Zero build tools. Zero configuration.** Just open `index.html` and play.
+
+### 📱 Install on Your Device (PWA)
+
+DayQuest is a **Progressive Web App** — install it like a native app without any app store.
+
+#### Android (Chrome)
+1. Open [DayQuest Live Demo](https://jucish2019-a11y.github.io/dayquest/) in Chrome
+2. Tap the **⋮ menu** → **"Add to Home screen"** (or tap the install banner when it appears)
+3. Confirm the install — DayQuest icon appears on your home screen
+4. Open it — fullscreen mode, no browser bar, works offline
+
+#### iOS (Safari)
+1. Open [DayQuest Live Demo](https://jucish2019-a11y.github.io/dayquest/) in Safari
+2. Tap the **Share button** (box with arrow)
+3. Scroll down → tap **"Add to Home Screen"**
+4. Name it "DayQuest" → tap **Add**
+5. Open from your home screen — fullscreen experience with your custom icon
+
+#### Desktop (Chrome/Edge)
+1. Open [DayQuest Live Demo](https://jucish2019-a11y.github.io/dayquest/)
+2. Click the **install icon** in the address bar (looks like a monitor with arrow)
+3. Click **Install**
+4. Opens in its own window — like a native app
+
+> **Note:** The first visit caches all files. After that, DayQuest works **completely offline** — no internet needed.
 
 ---
 
@@ -107,16 +138,22 @@ Customize XP multiplier, toggle sound, **choose your cursor style**, export/impo
 
 ```
 dayquest/
-├── index.html                 # Single-page entry point
+├── index.html                 # Single-page entry point + PWA meta tags
+├── manifest.json              # PWA app manifest (name, icons, display mode)
+├── sw.js                      # Service worker (offline caching)
+├── icon-192.png               # Home screen icon (192x192)
+├── icon-512.png               # Home screen icon (512x512)
+├── generate-icons.js          # Script to regenerate icons (Node.js, no deps)
+├── icon-generator.html        # Browser-based icon generator (no Node needed)
 ├── design/
-│   ├── design-tokens.css      # Complete design system (~1,280 lines)
+│   ├── design-tokens.css      # Complete design system + mobile responsive (~1,600 lines)
 │   ├── design-system-spec.md  # Design specification document
 │   └── wireframe-spec.md      # UX wireframe specification
 └── src/
-    └── app.js                 # All application logic (~780 lines)
+    └── app.js                 # All application logic (~1,267 lines)
 ```
 
-**Total: 3 source files. Zero dependencies. Zero build step.**
+**Total: 5 core files + design docs. Zero dependencies. Zero build step.**
 
 ---
 
@@ -150,7 +187,9 @@ The design agents produced **143,000+ bytes** of specifications (color tokens, t
 | **State** | Plain JS object with `localStorage` persistence |
 | **Storage** | `localStorage` key `dayquest-data` (~2-10KB typical) |
 | **Browser Support** | Chrome 60+, Firefox 55+, Safari 12+, Edge 79+ |
-| **Performance** | < 50KB total, < 100ms first paint, 60fps animations |
+| **Performance** | < 80KB total, < 100ms first paint, 60fps animations |
+| **PWA** | Installable, offline-capable, service worker cached |
+| **Mobile** | Fully responsive, iOS safe area, Android installable |
 
 ---
 
@@ -178,6 +217,11 @@ The design agents produced **143,000+ bytes** of specifications (color tokens, t
 - XP multiplier setting
 - Responsive design (desktop + mobile)
 - `file://` protocol support (no server needed)
+- **PWA support** — installable on any device, works offline
+- **Mobile install banner** — prompts users to add to home screen
+- **Offline caching** — service worker caches all assets
+- **iOS safe area support** — works with notched iPhones
+- **Touch-optimized** — tap feedback, no zoom, no pull-to-refresh
 
 ### 🔮 Planned (v2.0)
 - Cloud sync (Firebase/Supabase) for multi-device support
@@ -185,7 +229,6 @@ The design agents produced **143,000+ bytes** of specifications (color tokens, t
 - Daily/weekly quest presets
 - Social sharing of achievements
 - Dark/light theme toggle
-- PWA support (installable, works offline)
 
 ---
 

@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>DayQuest - Gamified Daily Quest Tracker</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Safari PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DayQuest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Android/Chrome meta tags -->
+  <meta name="theme-color" content="#b44aff">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Prevent pull-to-refresh and overscroll bounce on mobile -->
+  <meta name="color-scheme" content="dark">
+
   <link rel="stylesheet" href="design/design-tokens.css">
 </head>
 <body>
@@ -50,6 +67,21 @@
   </div>
 
   <div id="toast-container" class="toast-container"></div>
+
+  <!-- PWA Install Prompt Banner -->
+  <div id="pwa-install-banner" class="pwa-install-banner hidden">
+    <div class="pwa-banner-content">
+      <span class="pwa-banner-icon">&#x2694;&#xFE0F;</span>
+      <div class="pwa-banner-text">
+        <strong>Install DayQuest</strong>
+        <span>Add to your home screen for quick access</span>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="btn btn-sm btn-primary" id="pwa-install-btn">Install</button>
+      <button class="btn btn-sm btn-ghost" id="pwa-dismiss-btn">Later</button>
+    </div>
+  </div>
 
   <div id="achievement-overlay" class="achievement-overlay hidden">
     <div class="achievement-overlay-card">
@@ -106,5 +138,65 @@
   </div>
 
   <script src="src/app.js"></script>
+
+  <!-- PWA: Service Worker Registration & Install Prompt -->
+  <script>
+    (function() {
+      // Register service worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js")
+          .then(function(reg) { console.log("DayQuest: Service Worker registered"); })
+          .catch(function(err) { console.warn("DayQuest: Service Worker failed", err); });
+      }
+
+      // PWA Install Banner
+      var deferredPrompt = null;
+      var banner = document.getElementById("pwa-install-banner");
+      var installBtn = document.getElementById("pwa-install-btn");
+      var dismissBtn = document.getElementById("pwa-dismiss-btn");
+
+      // Check if already dismissed this session
+      if (sessionStorage.getItem("dayquest-install-dismissed")) {
+        banner.classList.add("hidden");
+      }
+
+      window.addEventListener("beforeinstallprompt", function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Only show if not already installed and not dismissed
+        if (!banner.classList.contains("hidden") || !sessionStorage.getItem("dayquest-install-dismissed")) {
+          banner.classList.remove("hidden");
+        }
+      });
+
+      if (installBtn) {
+        installBtn.onclick = function() {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(result) {
+            if (result.outcome === "accepted") {
+              console.log("DayQuest: Installed!");
+            }
+            banner.classList.add("hidden");
+            deferredPrompt = null;
+          });
+        };
+      }
+
+      if (dismissBtn) {
+        dismissBtn.onclick = function() {
+          banner.classList.add("hidden");
+          sessionStorage.setItem("dayquest-install-dismissed", "1");
+        };
+      }
+
+      // Detect if already installed
+      window.addEventListener("appinstalled", function() {
+        console.log("DayQuest: PWA installed");
+        banner.classList.add("hidden");
+        deferredPrompt = null;
+      });
+    })();
+  </script>
 </body>
 </html>

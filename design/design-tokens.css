@@ -1610,3 +1610,269 @@ body {
   font-weight: 600;
   color: #a855f7;
 }
+
+/* ==========================================================================
+   PWA Install Banner
+   ========================================================================== */
+
+.pwa-install-banner {
+  position: fixed;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  right: var(--space-4);
+  max-width: 400px;
+  z-index: 1000;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: bannerSlideUp 0.3s ease-out;
+}
+
+.pwa-install-banner.hidden {
+  display: none;
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.pwa-banner-icon {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(180,74,255,0.4));
+}
+
+.pwa-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pwa-banner-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pwa-banner-text span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pwa-banner-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes bannerSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Mobile Responsive Overrides
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  /* Navbar: stack on mobile */
+  .navbar {
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .navbar-brand {
+    flex: 1;
+  }
+
+  .navbar-char {
+    order: -1;
+    width: 100%;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .navbar-nav {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 20px;
+  }
+
+  /* Page layout */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Progress ring: smaller on mobile */
+  .daily-progress {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .progress-ring-container {
+    align-self: center;
+  }
+
+  .daily-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  /* Quest cards: full width */
+  .quest-card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Stats charts: scale down */
+  .chart-section {
+    padding: var(--space-4);
+  }
+
+  .bar-chart {
+    gap: var(--space-2);
+  }
+
+  .stat-card {
+    min-width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .week-comparison {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .week-col {
+    width: 100%;
+    padding: var(--space-3);
+  }
+
+  /* Heatmap: scrollable on mobile */
+  .heatmap-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .heatmap-body {
+    min-width: 280px;
+  }
+
+  /* Modals: full screen on mobile */
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    margin: var(--space-4);
+    max-height: calc(100vh - var(--space-8));
+    overflow-y: auto;
+  }
+
+  /* Settings: stack items */
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .setting-select {
+    width: 100%;
+  }
+
+  /* Achievement grid: 2 columns on mobile */
+  .achievement-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  /* Leaderboard: compact */
+  .leaderboard {
+    gap: var(--space-1);
+  }
+
+  .leader-row {
+    padding: var(--space-2);
+  }
+
+  /* Toast: full width on mobile */
+  .toast-container {
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: var(--space-3);
+  }
+
+  .toast {
+    width: 100%;
+  }
+
+  /* PWA banner: full width */
+  .pwa-install-banner {
+    left: var(--space-2);
+    right: var(--space-2);
+    max-width: none;
+  }
+}
+
+/* iPhone notch / safe area support */
+@supports (padding: max(0px)) {
+  .navbar {
+    padding-left: max(var(--space-6), env(safe-area-inset-left));
+    padding-right: max(var(--space-6), env(safe-area-inset-right));
+  }
+
+  .page-layout {
+    padding-left: max(var(--space-6), env(safe-area-inset-left));
+    padding-right: max(var(--space-6), env(safe-area-inset-right));
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent pull-to-refresh on mobile */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent text selection on UI elements (feels more app-like) */
+.navbar, .nav-link, .btn, .toggle, .quest-check, .quest-menu-btn {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active state feedback for touch devices */
+.quest-card:active, .btn:active, .nav-link:active, .achievement-card:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}

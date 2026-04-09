@@ -1,0 +1,26 @@
+{
+  "name": "DayQuest - Gamified Daily Quest Tracker",
+  "short_name": "DayQuest",
+  "description": "Turn your daily routine into an RPG quest log. Complete quests, earn XP, level up.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d14",
+  "theme_color": "#b44aff",
+  "categories": ["productivity", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
