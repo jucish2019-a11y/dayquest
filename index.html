@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayQuest - Gamified Daily Quest Tracker</title>
+  <link rel="stylesheet" href="design/design-tokens.css">
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar" id="navbar">
+      <div class="navbar-brand">
+        <span class="navbar-logo">&#x2694;&#xFE0F;</span>
+        <span class="navbar-title">DayQuest</span>
+      </div>
+      <div class="navbar-nav">
+        <a class="nav-link active" onclick="navigateTo('home')" data-route="home">
+          <span class="nav-icon">&#x1F4CB;</span>
+          <span class="nav-label">Quest Board</span>
+        </a>
+        <a class="nav-link" onclick="navigateTo('stats')" data-route="stats">
+          <span class="nav-icon">&#x1F4CA;</span>
+          <span class="nav-label">Stats</span>
+        </a>
+        <a class="nav-link" onclick="navigateTo('achievements')" data-route="achievements">
+          <span class="nav-icon">&#x1F3C6;</span>
+          <span class="nav-label">Achievements</span>
+        </a>
+        <a class="nav-link" onclick="navigateTo('settings')" data-route="settings">
+          <span class="nav-icon">&#x2699;&#xFE0F;</span>
+          <span class="nav-label">Settings</span>
+        </a>
+      </div>
+      <div class="navbar-char" id="navbar-char">
+        <div class="char-level" id="nav-level">1</div>
+        <div class="char-info">
+          <div class="char-title" id="nav-title">Novice</div>
+          <div class="xp-bar-mini">
+            <div class="xp-bar-track">
+              <div class="xp-bar-fill" id="nav-xp-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="page-layout" id="main-content">
+      <!-- Pages rendered here -->
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <div id="achievement-overlay" class="achievement-overlay hidden">
+    <div class="achievement-overlay-card">
+      <div class="achievement-overlay-icon" id="ach-overlay-icon">&#x1F3C6;</div>
+      <div class="achievement-overlay-title">Achievement Unlocked!</div>
+      <div class="achievement-overlay-name" id="ach-overlay-name"></div>
+    </div>
+  </div>
+
+  <div id="quest-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeQuestModal()"></div>
+    <div class="modal-content">
+      <h2 id="quest-modal-title">Add New Quest</h2>
+      <form id="quest-form" onsubmit="submitQuestForm(event)">
+        <div class="form-group">
+          <label for="quest-name">Quest Name</label>
+          <input type="text" id="quest-name" placeholder="e.g. Exercise 30 min" required maxlength="50">
+        </div>
+        <div class="form-group">
+          <label for="quest-category">Category</label>
+          <select id="quest-category">
+            <option value="health">&#x1F4AA; Health &amp; Fitness</option>
+            <option value="mind">&#x1F9E0; Mindfulness &amp; Growth</option>
+            <option value="skills">&#x1F4BB; Productivity &amp; Skills</option>
+            <option value="social">&#x1F4AC; Social &amp; Relationships</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Difficulty</label>
+          <div class="difficulty-selector">
+            <button type="button" class="diff-btn" onclick="selectDiff(this,'easy')">&#x26A1; Easy</button>
+            <button type="button" class="diff-btn selected" onclick="selectDiff(this,'medium')">&#x26A1;&#x26A1; Medium</button>
+            <button type="button" class="diff-btn" onclick="selectDiff(this,'hard')">&#x26A1;&#x26A1;&#x26A1; Hard</button>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeQuestModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="quest-submit">Add Quest</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="modal-content">
+      <h2>Remove Quest?</h2>
+      <p class="modal-desc" id="delete-quest-name"></p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">Remove Quest</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/app.js"></script>
+</body>
+</html>
