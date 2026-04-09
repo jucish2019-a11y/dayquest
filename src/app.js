@@ -325,6 +325,7 @@
     var offset = circ*(1-pct/100);
 
     var html = '<div class="page-header">';
+    var st = getStats();
     var hint = getMotivationalHint(st, tc, aq);
     html += '<div><h1 class="page-title">'+greeting()+'</h1><p class="page-subtitle">'+hint+'</p></div>';
     html += '<div class="page-actions"><button class="btn btn-ghost" onclick="openQuestModal()">+ Add Quest</button></div>';
@@ -339,7 +340,6 @@
     html += '</svg>';
     html += '<div class="progress-ring-text"><span class="progress-ring-number">'+pct+'%</span><span class="progress-ring-label">'+cc+'/'+total+'</span></div>';
     html += '</div>';
-    var st = getStats();
     html += '<div class="daily-stats">';
     html += '<div class="daily-stat"><div class="daily-stat-value">'+st.totalXP+'</div><div class="daily-stat-label">Total XP</div></div>';
     html += '<div class="daily-stat"><div class="daily-stat-value">'+st.level+'</div><div class="daily-stat-label">Level</div></div>';
@@ -384,9 +384,8 @@
         var dl = q.diff==="easy"?"\u26A1":q.diff==="medium"?"\u26A1\u26A1":"\u26A1\u26A1\u26A1";
 
         // Stagger entrance animation
-        var staggerIdx = pending.length > 0 ? qi : (pending.length + qi - pending.length);
         var staggerDelay = Math.min(qi * 60, 300);
-        html += '<div class="quest-card'+(done?' completed':'')+' stagger-enter" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+';animation-delay:'+staggerDelay+'ms">';
+        html += '<div class="quest-card'+(done?' completed':'')+' stagger-enter" data-quest-id="'+q.id+'" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+';animation-delay:'+staggerDelay+'ms">';
         html += '<div class="quest-check'+(done?' checked':'')+'" onclick="toggleComplete(\''+q.id+'\')">'+(done?'\u2713':'')+'</div>';
         html += '<div class="quest-info">';
         html += '<div class="quest-name'+(done?' completed-text':'')+'">'+esc(q.name)+'</div>';
@@ -395,7 +394,7 @@
         html += '<span class="quest-xp">+'+XP[q.diff]+' XP</span>';
         if (done) html += '<span class="quest-time">\u2713 '+tc[q.id].time+'</span>';
         html += '</div></div>';
-        html += '<button class="quest-menu-btn" onclick="event.stopPropagation();showQMenu(\''+q.id+'\')">\u22EF</button>';
+        html += '<button class="quest-menu-btn" onclick="event.stopPropagation();showQMenu(\''+q.id+'\',this)">\u22EF</button>';
         html += '</div>';
       }
 

@@ -1,0 +1,35 @@
+At line:1 char:319
++ ... ce('stagger-enter" style=', 'stagger-enter" data-quest-id="'+q.id+'"  ...
++                                                                  ~
+You must provide a value expression following the '+' operator.
+At line:1 char:319
++ ... ce('stagger-enter" style=', 'stagger-enter" data-quest-id="'+q.id+'"  ...
++                                                                  ~
+Missing ')' in method call.
+At line:1 char:319
++ ... er" style=', 'stagger-enter" data-quest-id="'+q.id+'" style='); $c =  ...
++                                                   ~~~~~~~~~~~~~~~
+Unexpected token 'q.id+'" style='' in expression or statement.
+At line:1 char:334
++ ... r" style=', 'stagger-enter" data-quest-id="'+q.id+'" style='); $c = $ ...
++                                                                 ~
+Unexpected token ')' in expression or statement.
+At line:1 char:374
++ ... id="'+q.id+'" style='); $c = $c.Replace('showQMenu(\''+q.id+'\')", 's ...
++                                                                  ~
+Missing ')' in method call.
+At line:1 char:374
++ ... yle='); $c = $c.Replace('showQMenu(\''+q.id+'\')", 'showQMenu(\''+q.i ...
++                                                  ~~~~~~~~~~~~~~~~
+Unexpected token '\')", 'showQMenu' in expression or statement.
+At line:1 char:403
++ ... c.Replace('showQMenu(\''+q.id+'\')", 'showQMenu(\''+q.id+'\',this)">' ...
++                                                                 ~
+Missing argument in parameter list.
+At line:1 char:409
++ ... id+'\',this)">'); [System.IO.File]::WriteAllText('app.js',$c,[System. ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The string is missing the terminator: ".
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ExpectedValueExpression
+ 
