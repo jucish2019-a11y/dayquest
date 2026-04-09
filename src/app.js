@@ -94,6 +94,41 @@
     return "Night owl mode \u{1F5E1}\uFE0F";
   }
 
+  function getMotivationalHint(st, tc, aq) {
+    // Check for active streaks
+    var bestActiveStreak = 0, bestStreakName = "";
+    for (var sid in S.streaks) {
+      var s2 = S.streaks[sid];
+      if (s2.current >= 3 && s2.current > bestActiveStreak) {
+        bestActiveStreak = s2.current;
+        for (var qi=0;qi<S.quests.length;qi++) { if (S.quests[qi].id===sid) { bestStreakName=S.quests[qi].name; break; } }
+      }
+    }
+    if (bestActiveStreak >= 3) return "\uD83D\uDD25 "+bestActiveStreak+"-day streak on "+bestStreakName+"!";
+
+    // Check achievement progress
+    var closestAch = null, closestProgress = 0;
+    for (var ai=0;ai<ACH.length;ai++) {
+      var a = ACH[ai];
+      if (S.unlocked.indexOf(a.id)!==-1) continue;
+      var progress = 0;
+      if (a.id==="a1") progress = Math.min(st.totalCompleted/1*100, 99);
+      else if (a.id==="a2") progress = Math.min(st.totalCompleted/10*100, 99);
+      else if (a.id==="a3") progress = Math.min(st.bestStreak/7*100, 99);
+      else if (a.id==="a5") progress = Math.min(st.balancedDays/1*100, 99);
+      else if (a.id==="a6") progress = Math.min(st.totalCompleted/100*100, 99);
+      else if (a.id==="a9") progress = Math.min(st.level/10*100, 99);
+      if (progress > closestProgress) { closestProgress = progress; closestAch = a; }
+    }
+    if (closestAch && closestProgress > 0) return "\uD83C\uDFC6 "+Math.round(closestProgress)+"% to "+closestAch.name;
+
+    // Default hints
+    var remaining = aq.length - Object.keys(tc).length;
+    if (remaining === aq.length) return "Complete your quests and earn XP";
+    if (remaining <= 2) return "\u2B50 Almost done \u2014 "+remaining+" quest"+(remaining!==1?"s":"")+" to go!";
+    return remaining+" quest"+(remaining!==1?"s":"")+" remaining \u2014 keep going!";
+  }
+
   /* ========== STATS ========== */
   function getStats() {
     var totalCompleted = 0;
@@ -290,7 +325,8 @@
     var offset = circ*(1-pct/100);
 
     var html = '<div class="page-header">';
-    html += '<div><h1 class="page-title">'+greeting()+'</h1><p class="page-subtitle">Complete your quests and earn XP</p></div>';
+    var hint = getMotivationalHint(st, tc, aq);
+    html += '<div><h1 class="page-title">'+greeting()+'</h1><p class="page-subtitle">'+hint+'</p></div>';
     html += '<div class="page-actions"><button class="btn btn-ghost" onclick="openQuestModal()">+ Add Quest</button></div>';
     html += '</div>';
 
@@ -316,7 +352,6 @@
     for (var ci=0;ci<cats.length;ci++) {
       var catKey = cats[ci];
       var catQuests = aq.filter(function(q){return q.cat===catKey;});
-      if (catQuests.length===0) continue;
       var clr = CAT_CLR[catKey];
       var completedInCat = catQuests.filter(function(q){return tc[q.id];}).length;
 
@@ -326,6 +361,13 @@
       html += '<span class="category-name">'+catKey.charAt(0).toUpperCase()+catKey.slice(1)+'</span>';
       html += '<span class="category-count">'+completedInCat+'/'+catQuests.length+'</span>';
       html += '</div><div class="quest-list">';
+
+      // Empty state: no quests in this category
+      if (catQuests.length===0) {
+        html += '<div class="category-empty-state"><span class="empty-state-icon">+</span><span class="empty-state-text">No quests yet — tap + to add one</span></div>';
+        html += '</div></div>';
+        continue;
+      }
 
       // Sort: incomplete first, completed last (archived at bottom)
       var pending = catQuests.filter(function(q){return !tc[q.id];});
@@ -341,7 +383,10 @@
         var done = !!tc[q.id];
         var dl = q.diff==="easy"?"\u26A1":q.diff==="medium"?"\u26A1\u26A1":"\u26A1\u26A1\u26A1";
 
-        html += '<div class="quest-card'+(done?' completed':'')+'" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+'">';
+        // Stagger entrance animation
+        var staggerIdx = pending.length > 0 ? qi : (pending.length + qi - pending.length);
+        var staggerDelay = Math.min(qi * 60, 300);
+        html += '<div class="quest-card'+(done?' completed':'')+' stagger-enter" style="--cat-color:'+clr.txt+';--cat-bg:'+clr.bg+';--cat-border:'+clr.brd+';animation-delay:'+staggerDelay+'ms">';
         html += '<div class="quest-check'+(done?' checked':'')+'" onclick="toggleComplete(\''+q.id+'\')">'+(done?'\u2713':'')+'</div>';
         html += '<div class="quest-info">';
         html += '<div class="quest-name'+(done?' completed-text':'')+'">'+esc(q.name)+'</div>';
@@ -408,7 +453,7 @@
     }
   }
 
-  function showQMenu(id) {
+  function showQMenu(id, btnEl) {
     document.querySelectorAll(".quest-context-menu").forEach(function(el){el.remove();});
     var quest = null;
     for (var i=0;i<S.quests.length;i++) { if (S.quests[i].id===id) { quest=S.quests[i]; break; } }
@@ -431,11 +476,12 @@
 
     document.body.appendChild(menu);
 
-    // Position
-    var rect = menu.getBoundingClientRect();
-    menu.style.top = "50%";
-    menu.style.left = "50%";
-    menu.style.transform = "translate(-50%,-50%)";
+    // Position near the clicked button
+    var bRect = btnEl.getBoundingClientRect();
+    menu.style.right = (window.innerWidth - bRect.right) + "px";
+    menu.style.top = (bRect.bottom + 4) + "px";
+    menu.style.left = "auto";
+    menu.style.transform = "none";
 
     // Click backdrop to close
     var backdrop = document.createElement("div");
